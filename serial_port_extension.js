@@ -25,7 +25,7 @@ new (function() {
 
     var descriptor = {
         blocks: [
-            ['', 'refresh ports', 'refreshPorts'],
+            ['', '刷新端口', 'refreshPorts'],
             ['r', "serial port: %m.availablePorts", 'setPort', currentPort],
             ['r', "baud rate: %m.baudRates", 'setBaud', currentBaud],
             ['', 'connect to %s at %s', 'setupSerial', currentPort, currentBaud],
@@ -77,32 +77,7 @@ new (function() {
 
         //bind events
         socket.on('connected', function(data){
-
-            if (data.portName) currentPort = data.portName;
-            if (data.baudRate) currentBaud = data.baudRate;
-
-            var oldPorts = availablePorts.slice();//copy array
-
-            availablePorts.splice(0, availablePorts.length);
-            if (data.availablePorts && data.availablePorts.length>0){
-                for (var i=0;i<data.availablePorts.length;i++){
-                    availablePorts.push(data.availablePorts[i]);
-                }
-            } else {
-                availablePorts.push(nullPort);
-                currentPort = availablePorts[0];
-            }
-
-            //check if availablePorts has changed
-            if (compareArrays(availablePorts, oldPorts)){
-                //this is so hacky!  I know I'm terrible, but this was the only way to update my menus
-                Scratch.FlashApp.ASobj.ASloadExtension({
-                    extensionName: "Serial Port",
-                    blockSpecs: descriptor.blocks,
-                    url: descriptor.url,
-                    menus: descriptor.menus
-                });
-            }
+            socket.write('fasfsafasgsa');
         });
 
         socket.on("dataIn", function(data){//oncoming serial data
