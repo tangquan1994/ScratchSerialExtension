@@ -1,170 +1,79 @@
-/**
- * Created by aghassaei on 6/17/15.
- */
+const express=require('express');
+const cors = require('cors')
 
-var SerialPort = require('SerialPort');
-const Readline = require('@serialport/parser-readline');
+//一个express实例
 
-var app = require('http').createServer();
-var io = require('socket.io')(app);
-app.listen(8080);
+const app=express();
 
-//defaults
-var portName = null;
-var currentPort = null;
-var baudRate = 9600;
-var allPorts = [];
+const corsConfig = {
+    origin:'http://localhost:8080',
+    credentials:true,
+}
 
-io.on('connection', function(socket){
+//使用默认
+app.use(cors())
+//或修改默认配置
+app.use(cors(corsConfig))
 
-    socket.emit("socketConnected");
+  
+// app.use((req, rsp, next) => {
+//     rsp.setHeader('Access-Control-Allow-Origin', '*')
+//     next()
+// })
 
-    refreshAvailablePorts(function(_allPorts, _portName, _baudRate){
-        changePort(_portName, _baudRate);
-    });
+app.all("*",function(req,res,next){
 
-    socket.on('initPort', function(data){
-        refreshAvailablePorts(function(){
-            var _portName = data.portName || portName;
-            var _baudRate = data.baudRate || baudRate;
-            if (!checkThatPortExists(_portName)) return;
-            changePort(_portName, _baudRate);
-        });
-    });
+    //设置允许跨域的域名，*代表允许任意域名跨域
 
-    socket.on('dataOut', function(data){
-        io.emit('dataSent', data);
-        // data += '\n';
-        console.log("Sending data: " + data);
-        if (!currentPort){
-            socket.emit("errorMsg", {error:"no port currently connected"});
-            return;
-        }
-        currentPort.write(new Buffer(data), function(err, res) {
-            if (err) onPortError(err);
-        });
-//        currentPort.write(new Buffer([parseInt(data)]));//write byte
-    });
+    res.header("Access-Control-Allow-Origin","*");
 
-    socket.on('flush', function(){
-        if (currentPort) currentPort.flush(function(){
-            console.log("port " + portName + " flushed");
-        });
-    });
+    //允许的header类型
 
-    socket.on('refreshPorts', function(){
-        // console.log("refreshing ports list");
-        refreshAvailablePorts();
-    });
+    res.header("Access-Control-Allow-Headers","content-type");
 
-    socket.on('disconnectPort', function(){
-        disconnectPort();
-    });
+    //跨域允许的请求方式 
 
-    function checkThatPortExists(_portName){
-        if (allPorts.indexOf(_portName) < 0) {
-            onPortError("no available port called " + _portName);
-            return false;
-        }
-        return true;
-    }
+    res.header("Access-Control-Allow-Methods","DELETE,PUT,POST,GET,OPTIONS");
 
-    function refreshAvailablePorts(callback){
-        var _allPorts = [];
-        SerialPort.list(function(err, ports){
-            ports.forEach(function(port) {
-                _allPorts.push(port.comName);
-            });
+    if (req.method.toLowerCase() == 'options')
 
-            allPorts = _allPorts;
+        res.send(200);  //让options尝试请求快速结束
 
-            if (!portName && _allPorts.length>0) portName = _allPorts[0];
-            if (callback) callback(allPorts, portName, baudRate);
+    else
 
-            io.emit('connected', {
-                baudRate: baudRate,
-                portName: portName,
-                availablePorts: _allPorts
-            });
-        });
-    }
+        next();
 
-    function initPort(_portName, _baudRate){
+})
 
-        console.log("initing port " + _portName + " at " + _baudRate);
-        var port = new SerialPort(_portName, {
-            baudRate: parseInt(_baudRate),
-            autoOpen: false
-        //       parser: SerialPort.parsers.raw
-        });
-        var parser = new Readline();
-        port.pipe(parser);
+  
+//app.use((req,res)=>{
 
-        port.open(function(error){
-            if (error) {
-                onPortError(error);
-                // currentPort = null;
-                return;
-            }
-            onPortOpen(_portName, _baudRate);
-            parser.on('data', onPortData);
-            port.on('error', onPortError);
-        });
-        return port;
-    }
+//  res.json({
 
-    function disconnectPort(callback){
-        if (currentPort && currentPort.isOpen()){
-            var oldBaud = baudRate;
-            var oldName = portName;
-            console.log("disconnecting port " + oldName + " at " + oldBaud);
-            currentPort.on('close', function(){
-                io.emit("portDisconnected", {baudRate:oldBaud, portName:oldName});
-                if (callback) callback();
-            });
-            currentPort.close(function(error){
-                if (error) {
-                    onPortError(error);
-                    return null;
-                }
+//  name:"张上"
 
-            });
-        } else if (callback) callback();
-    }
+//  })
 
-    function changePort(_portName, _baudRate){
-        console.log("change");
-        if (!_portName) {
-            onPortError("no port name specified");
-            return null;
-        }
-        if (!_baudRate) _baudRate = baudRate;
-        disconnectPort(function(){
-            currentPort = initPort(_portName, _baudRate);
-            portName = _portName;
-            baudRate = _baudRate;
-        });
-    }
+//})
 
-    function onPortOpen(name, baud){
-        console.log("connected to port " + name + " at " + baud);
-        io.emit("portConnected", {baudRate:baud, portName:name});
-    }
+app.get('/name',(req,res)=>{
 
-    function onPortData(data){
-        console.log(data);
-        io.emit('dataIn', data);
-    }
+    let {age}=req.params;
 
-    function onPortError(error){
-        console.log("Serial port error " + error);
-        io.emit("errorMsg", {error:String(error)});
-    }
+    res.send('tom');
 
 });
 
+app.post('/name',(req,res)=>{
 
+    res.send('tom post');
 
+});
 
+ 
 
+app.listen(8080,()=>{
 
+    console.log('启动成功');
+
+});
