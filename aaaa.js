@@ -25,7 +25,12 @@ new (function() {
 
     var descriptor = {
         blocks: [
-            ['', 'aaaaa', 'refreshPorts'],
+            ['', 'Search devices', 'SearchDevices'],
+            ['', 'Send cmd:%s,%s', 'SendCmd', 'LED', 'white'],
+            ['r', "Get device name", 'getDeviceName'],
+            ['r', "Set device name: %m", 'setDeviceName', 'test'],
+            ['h', 'Device connected', 'DeviceConnected'],
+            ['b', 'Is device connected', 'IsDeviceConnected'],
         ],
         menus: {
             availablePorts: availablePorts,
@@ -34,8 +39,8 @@ new (function() {
         url: 'https://github.com/amandaghassaei/ScratchSerialExtension'
     };
 
-    ext.refreshPorts = function(){
-        console.log("surprise mother fxxker");
+    ext.SearchDevices = function(){
+        console.log("SearchDevices");
 
         var httpRequest = new XMLHttpRequest();//第一步：创建需要的对象
         httpRequest.open('POST', 'http://localhost:8080/name', true); //第二步：打开连接/***发送json格式文件必须设置请求头 ；如下 - */
@@ -53,8 +58,31 @@ new (function() {
           if (httpRequest.readyState == 4 && httpRequest.status == 200) {//验证请求是否发送成功
             var json = httpRequest.responseText;//获取到服务端返回的数据
             console.log(json);
+            ext.DeviceConnected();
           }
         };
+    };
+
+    ext.SendCmd = function(cmd, param){
+        console.log("SendCmd:" + cmd + ',' + param);
+
+    };
+
+    ext.DeviceConnected = function(){
+        console.log("DeviceConnected:");
+        return false;
+    };
+
+    ext.IsDeviceConnected = function(){
+        return true;
+    };
+
+    ext.getDeviceName = function(){
+        return 'aaasss';
+    };
+
+    ext.setDeviceName = function(portName){
+        console.log("setDeviceName:" + portName);
     };
 
     ScratchExtensions.register('Serial Port', descriptor, ext);
