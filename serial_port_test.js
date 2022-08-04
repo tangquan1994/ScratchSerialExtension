@@ -31,7 +31,7 @@ SerialPort.list(function (error, ports) {
     });
 })
 
-const port = new SerialPort({ path: 'COM3', baudRate: 9600 })
+const port = new SerialPort({ path: 'COM5', baudRate: 9600 })
 
 port.open((err)=>{
     console.log('IsOpen:',port.isOpen)
