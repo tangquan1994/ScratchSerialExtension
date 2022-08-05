@@ -1,9 +1,19 @@
 new (function() {
+
+    console.log('extension loaded...');
+
+    // step 1: connect to websocket server
+    
+    // step 2: register scratchx extension
+
+
     var ext = this;
+
+    var socket = null;
+    var is_server_connected = false;
 
     var nullPort = "nothing connected";
     var availablePorts = [nullPort];
-    var socket;
 
     var currentPort = availablePorts[0];
     var currentBaud = 9600;
@@ -20,12 +30,14 @@ new (function() {
 
     var descriptor = {
         blocks: [
+            ['', 'Connect to server', 'connectToServer'],
+            ['', 'Disconnect from server', 'disconnectFromServer'],
+            ['b', 'Connection status', 'connctionStatus'],
             ['', 'Search devices', 'SearchDevices'],
             ['', 'Send cmd:%s,%s', 'SendCmd', 'LED', 'white'],
             ['r', "Get device name", 'getDeviceName'],
             ['r', "Set device name: %m", 'setDeviceName', 'test'],
             ['h', 'Device connected', 'DeviceConnected'],
-            ['b', 'Is device connected', 'IsDeviceConnected'],
         ],
         menus: {
             availablePorts: availablePorts,
@@ -33,6 +45,60 @@ new (function() {
         },
         url: 'https://github.com/amandaghassaei/ScratchSerialExtension'
     };
+
+    ext.connectToServer = function(){
+        if (socket == null) {
+            console.log("Connect to server");
+
+            socket = new WebSocket("ws://localhost:8000");
+
+            socket.onopen = function() {
+                is_server_connected = true;
+                socket.send("hello server!");
+            };
+
+            socket.onmessage = function(e) {
+                console.log(e.data);
+            };
+
+            socket.onclose = function() {
+                console.log("Socket closed.");
+            }
+        } else {
+            console.log("Already connected");
+        }
+    };
+
+    ext.disconnectFromServer = function(){
+        if (socket == null) {
+            console.log("Already disconnected");
+        } else {
+            socket.close();
+            socket = null;
+            is_server_connected = false;
+        }
+    };
+
+    ext.connctionStatus = function(){
+        return is_server_connected;
+    };
+
+    ext.SendCmd = function(cmd, param){
+        console.log("SendCmd:" + cmd + ',' + param);
+        if (socket != null) {
+            socket.send(cmd + ' ' + param);
+        } else {
+            console.log("Not connected");
+        }
+    };
+
+
+
+
+
+
+
+
 
     ext.SearchDevices = function(){
         console.log("SearchDevices");
@@ -45,10 +111,6 @@ new (function() {
         socket.onmessage = function(e) {
             console.log(e.data);
         };
-    };
-
-    ext.SendCmd = function(cmd, param){
-        console.log("SendCmd:" + cmd + ',' + param);
     };
 
     ext.DeviceConnected = function(){
