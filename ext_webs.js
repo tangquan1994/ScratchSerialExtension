@@ -86,7 +86,7 @@ new (function() {
     ext.SendCmd = function(cmd, param){
         console.log("SendCmd:" + cmd + ',' + param);
         if (socket != null) {
-            socket.send(cmd + ' ' + param);
+            socket.send(cmd + ' ' + param + '\r\n');
         } else {
             console.log("Not connected");
         }

@@ -6,20 +6,78 @@ const express = require('express')
 const socketIo = require('socket.io')
 const cors = require('cors')
 const ws = require("nodejs-websocket") // Scream server example: "hi" -> "HI!!!"
+var ws_connection = null
 
 var server = ws.createServer(function (conn) {
     console.log("New connection")
+    ws_connection = conn
     conn.on("text", function (str) {
         console.log("Received " + str)
-        conn.sendText(str.toUpperCase() + "!!!")
+        // conn.sendText(str.toUpperCase() + "!!!")
+        conn.sendText('ACK:' + str)
+        if (port.isOpen) {
+            port.write(str);
+        }
     })
 
     conn.on("close", function (code, reason) {
         console.log("Connection closed")
+        ws_connection = null
     })
 }).listen(8000)
 
 console.log('Websocket server started');
+
+
+
+
+//****************************************************************************
+//**************************serial port connection****************************
+//****************************************************************************
+var SerialPort = require('serialport').SerialPort
+// const bindings_cpp_1 = require("@serialport/bindings-cpp");
+// bindings_cpp_1.WindowsBinding.list().then(ports => {
+//         console.log(ports)
+//     })
+//     .catch(err => {
+//     console.error(err);
+//     process.exit(1);
+// });
+
+//获取端口列表
+SerialPort.list(function (error, ports) {
+    console.log('port list:');
+    ports.forEach(function(port) {
+        console.log(port.comName);
+        console.log(port.pnpId);
+        console.log(port.manufacturer);
+    });
+})
+
+const port = new SerialPort({ path: 'COM5', baudRate: 9600 })
+
+port.open((err)=>{
+    console.log('IsOpen:', port.isOpen)
+    console.log('err:', err)
+})
+
+port.write('ROBOT POWER ON')
+
+port.on('data', async function (data) {
+    //接收到串口传递来的数据后，对数据处理
+    console.log('data received: ' + data)
+    if (ws_connection != null) {
+        ws_connection.sendText(data)
+    }
+})
+
+port.on('error', function (error) {
+    console.log('error: ' + error)
+})
+
+console.log('Serial port service started');
+
+
 
 
 //****************************************************************************
